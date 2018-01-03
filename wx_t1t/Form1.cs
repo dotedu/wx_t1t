@@ -189,12 +189,10 @@ namespace wx_t1t
             ms.Close();
             return deserialized;
         }
-        public double randomd(int i)
+        private double randomd()
         {
             Random rd = new Random();
-            double Random_DT = rd.NextDouble();
-            return Math.Round(Random_DT, i);
-
+            return  rd.NextDouble();
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -213,11 +211,11 @@ namespace wx_t1t
             gd.musicList = new List<bool>();
             gd.touchList = new List<object>();
 
-            for (var i = Math.Round(12000 + Random_DT * 2000); i > 0; i--)
+            for (var i = Math.Round(12000 + randomd() * 2000); i > 0; i--)
             {
-                gd.action.Add(new object[3] { randomd(3), Math.Round(Random_DT * 2, 2), i / 5000 == 0 ? true : false });
+                gd.action.Add(new object[3] { Math.Round(randomd(), 3), Math.Round(randomd() * 2, 2), i / 5000 == 0 ? true : false });
             gd.musicList.Add(false);
-            gd.touchList.Add(new object[2] { Math.Round(250 - Random_DT *10, 4), Math.Round(650 - Random_DT * 10 * 2, 4) });
+            gd.touchList.Add(new object[2] { Math.Round(250 - randomd() * 10, 4), Math.Round(650 - randomd() * 10 * 2, 4) });
         }
 
             gd.version = 1;
