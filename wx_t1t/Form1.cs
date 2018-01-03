@@ -222,9 +222,9 @@ namespace wx_t1t
             var s2= WriteFromObject<GameData>(gd);
             ad.game_data = s2;
 
-            textBox4.Text = WriteFromObject<ActionDate>((Object)ad);
+            //textBox4.Text = WriteFromObject<ActionDate>((Object)ad);
 
-            textBox2.Text = AESEncrypt(textBox4.Text, textBox1.Text);
+            var ss = AESEncrypt(WriteFromObject<ActionDate>((Object)ad), textBox1.Text);
         }
 
         private long GetTimeStamp(DateTime dateTime)
