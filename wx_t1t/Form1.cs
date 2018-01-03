@@ -14,6 +14,7 @@ using RestSharp;
 using System.Runtime.Serialization.Json;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
+using System.Diagnostics;
 
 namespace wx_t1t
 {
@@ -23,100 +24,184 @@ namespace wx_t1t
         {
             InitializeComponent();
         }
-
+        private Action OnPostSuccess;
+        private Action OnPostFail;
+        long times { get; set; }
+        string session_id { get; set; }
+        static int version = 9;
+        int score { get; set; }
         string base_site = "https://mp.weixin.qq.com/wxagame/";
 
-        string referer = "https://servicewechat.com/wx7c8d593b2c3a7703/{0}/page-frame.html";
+        string referer = "https://servicewechat.com/wx7c8d593b2c3a7703/"+ version + "/page-frame.html";
 
-        string USER_AGENT = "MicroMessenger/6.6.1.1200(0x26060130) NetType/4G Language/zh_CN";
-        long times;
+        string USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 11_2_1 like Mac OS X) AppleWebKit/604.4.7 (KHTML, like Gecko) Mobile/15C153 MicroMessenger/6.6.1 NetType/WIFI Language/zh_CN";
+
+
         private void button1_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(textBox1.Text)&& !string.IsNullOrEmpty(textBox3.Text))
+            if (!string.IsNullOrEmpty(SessionId.Text))
             {
-                var session_id = textBox1.Text;
-                var version = numericUpDown1.Value.ToString();
-                var score = textBox3.Text;
-                wxagame_init(session_id, version);
-                wxagame_getuserinfo(session_id, version);
-                wxagame_init(session_id, version);
-                wxagame_init(session_id, version);
+                session_id = SessionId.Text;
+                score = (int)ScoreNum.Value;
+
+
+                OnPostSuccess = () =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        MessageBox.Show("修改成功");
+                    });
+                };
+                OnPostFail = () =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        MessageBox.Show("修改失败");
+                    });
+                };
+                RunAsync(() =>
+                {
+                    wxagame_getuserinfo();
+                    wxagame_getfriendsscore();
+                });
 
             }
             else
             {
-                MessageBox.Show("“session_id”与 “得分”不能为空");
+                MessageBox.Show("\"session_id\" 不能为空!");
             }
         }
 
-
-        private void wxagame_init(string session_id, string version)
-        {
-            var client = new RestClient(base_site+"wxagame_init");
-            client.UserAgent = USER_AGENT;
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("content-type", "application/json");
-            request.AddHeader("referer", string.Format(referer, version));
-            request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"version\":{1}}}", session_id, version), ParameterType.RequestBody);
-            IRestResponse response = client.Execute(request);
-        }
-
-        private void wxagame_getuserinfo(string session_id, string version)
+        private void wxagame_getuserinfo()
         {
             var client = new RestClient(base_site + "wxagame_getuserinfo");
             client.UserAgent = USER_AGENT;
             var request = new RestRequest(Method.POST);
             request.AddHeader("content-type", "application/json");
-            request.AddHeader("referer", string.Format(referer, version));
+            request.AddHeader("referer", referer);
             request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"version\":{1}}}", session_id, version), ParameterType.RequestBody);
+            try
+            {
+                IRestResponse response = client.Execute(request);
+                Debug.WriteLine(response.Content);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+      
+        private void wxagame_getfriendsscore()
+        {
+            var client = new RestClient(base_site + "wxagame_getfriendsscore");
+            client.UserAgent = USER_AGENT;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("content-type", "application/json");
+            request.AddHeader("referer", referer);
+            request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"version\":{1}}}", session_id, version), ParameterType.RequestBody);
+            try
+            {
+                IRestResponse response = client.Execute(request);
+                Debug.WriteLine(response.Content);
+                var resultJS = ReadToObject(response.Content);
+                if (resultJS.base_resp.errcode == 0)
+                {
+                    times = resultJS.my_user_info.times + 1;
+                    wxagame_init();
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+        private void wxagame_init()
+        {
+            var client = new RestClient(base_site + "wxagame_init");
+            client.UserAgent = USER_AGENT;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("content-type", "application/json");
+            request.AddHeader("referer", referer);
+            request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"version\":{1}}}", session_id, version), ParameterType.RequestBody);
+            try
+            {
+                IRestResponse response = client.Execute(request);
+                Debug.WriteLine(response.Content);
+                var resultJS = ReadToObject(response.Content);
+                if (resultJS.base_resp.errcode == 0)
+                {
+                    wxagame_settlement();
+                }
+
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        private void wxagame_settlement()
+        {
+            var action_data = Datestr();
+            var client = new RestClient(base_site + "wxagame_settlement");
+            client.UserAgent = USER_AGENT;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("content-type", "application/json");
+            request.AddHeader("referer", referer);
+            request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"action_data\":{1}}}", session_id, action_data), ParameterType.RequestBody);
+
             IRestResponse response = client.Execute(request);
-            //var resultJS = JsonConvert.DeserializeObject<Result>(response.Content);
+            Debug.WriteLine(response.Content);
+
             var resultJS = ReadToObject(response.Content);
-            times = resultJS.base_resp.ts + 1000;
+            if (resultJS.base_resp.errcode== 0)
+            {
+                OnPostSuccess?.Invoke();
+            }
+            else
+            {
+                OnPostFail?.Invoke();
+            }
         }
 
-        private void wxagame_getfriendsscore(string session_id, string version)
+
+        private string Datestr()
         {
-            var client = new RestClient(base_site + "wxagame_getfriendsscore");
-            client.UserAgent = USER_AGENT;
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("content-type", "application/json");
-            request.AddHeader("referer", string.Format(referer, version));
-            request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"version\":{1}}}", session_id, version), ParameterType.RequestBody);
-            IRestResponse response = client.Execute(request);
-        }
+            ActionDate ad = new ActionDate();
 
+            GameData gd = new GameData();
+            ad.score = score;
+            ad.times = times;
 
+            gd.seed = GetTimeStamp(DateTime.Now);
+            gd.action = new List<object>();
+            gd.musicList = new List<bool>();
+            gd.touchList = new List<object>();
 
-
-
-    private void wxagame_settlement(string session_id, string version,string score)
-        {
-            var client = new RestClient(base_site + "wxagame_getfriendsscore");
-            client.UserAgent = USER_AGENT;
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("content-type", "application/json");
-            request.AddHeader("referer", string.Format(referer, version));
-            request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"action_data\":{1}}}", session_id, version), ParameterType.RequestBody);
-            IRestResponse response = client.Execute(request);
-        }
-
-        //private string action_data()
-        //{
-
+            for (var i = 0; i < score; i++)
+            {
+                gd.action.Add(new object[3] { 0.752, 1.32, false });
+                gd.musicList.Add(false);
+                gd.touchList.Add(new object[2] { Math.Round(250 - randomd() * 10, 0), Math.Round(650 - randomd() * 10 * 2, 0) });
+            }
+            //for (var i = 0; i < score; i++)
+            //{
+                //action.push([0.752, 1.32, false])
+            //musicList.push(false)
+            //touchList.push([Math.round(100 + Math.random() * 200), Math.round(300 + Math.random() * 200)])
         //}
+        gd.version = 1;
+            var s2 = WriteFromObject<GameData>(gd);
+            ad.game_data = s2;
 
-        private string encrypt(string text, string originKey)
-        {
+            var ActionData = AESEncrypt(WriteFromObject<ActionDate>((Object)ad), session_id);
 
-            
-            originKey = originKey.Substring(0, 16);
-
-            var ciphertext ="";
-            return ciphertext;
+            return ActionData;
         }
 
-        public string AESEncrypt(string text, string originKey)
+        private string AESEncrypt(string text, string originKey)
            
         {
             var password = originKey.Substring(0, 16);
@@ -155,10 +240,7 @@ namespace wx_t1t
             Array.Copy(ivBytes, IvBytes, len);
 
             rijndaelCipher.IV = IvBytes;
-
-
-
-            ICryptoTransform transform = rijndaelCipher.CreateEncryptor();
+           ICryptoTransform transform = rijndaelCipher.CreateEncryptor();
 
             byte[] plainText = Encoding.UTF8.GetBytes(text);
             byte[] cipherBytes = transform.TransformFinalBlock(plainText, 0, plainText.Length);
@@ -166,9 +248,9 @@ namespace wx_t1t
             return Convert.ToBase64String(cipherBytes);
 
         }
- 
 
-        public string WriteFromObject<T>(Object ad)
+
+        private string WriteFromObject<T>(Object ad)
         {
             MemoryStream ms = new MemoryStream();
 
@@ -180,7 +262,7 @@ namespace wx_t1t
             return Encoding.UTF8.GetString(json, 0, json.Length);
 
         }
-        public Result ReadToObject(string json)
+        private Result ReadToObject(string json)
         {
             Result deserialized = new Result();
             MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
@@ -197,9 +279,6 @@ namespace wx_t1t
 
         private void button2_Click(object sender, EventArgs e)
         {
-            var s = "{\"base_resp\":{\"errcode\":0,\"ts\":\"1514948042711\"},\"nickname\":\"鱼跃\",\"headimg\":\"http\"}";
-            var O = ReadToObject(s);
-
             ActionDate ad = new ActionDate();
 
             GameData gd = new GameData();
@@ -222,15 +301,27 @@ namespace wx_t1t
             var s2= WriteFromObject<GameData>(gd);
             ad.game_data = s2;
 
-            //textBox4.Text = WriteFromObject<ActionDate>((Object)ad);
-
-            var ss = AESEncrypt(WriteFromObject<ActionDate>((Object)ad), textBox1.Text);
+            var ss = AESEncrypt(WriteFromObject<ActionDate>((Object)ad), SessionId.Text);
         }
 
         private long GetTimeStamp(DateTime dateTime)
         {
             DateTime dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, 0);
             return (dateTime.ToUniversalTime().Ticks - dt1970.Ticks) / 10000;
+        }
+
+        void RunAsync(Action action)
+        {
+            ((Action)(delegate () {
+                action?.Invoke();
+            })).BeginInvoke(null, null);
+        }
+
+        void RunInMainthread(Action action)
+        {
+            this.BeginInvoke((Action)(delegate () {
+                action?.Invoke();
+            }));
         }
     }
 
@@ -242,11 +333,20 @@ namespace wx_t1t
     public class Result
     {
         public BaseResp base_resp { get; set; }
+        public string version { get; set; }
+        public MyUserInfo my_user_info { get; set; }
+    }
+    public class MyUserInfo
+    {
         public string nickname { get; set; }
         public string headimg { get; set; }
-        public string version { get; set; }
+        public IList<object> score_info { get; set; }
+        public int history_best_score { get; set; }
+        public int week_best_score { get; set; }
+        public int grade { get; set; }
+        public int times { get; set; }
+        public IList<object> hongbao_list { get; set; }
     }
-
     [DataContract]
     public class GameData
     {

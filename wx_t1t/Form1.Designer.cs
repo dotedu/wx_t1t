@@ -29,17 +29,11 @@
         private void InitializeComponent()
         {
             this.label1 = new System.Windows.Forms.Label();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.SessionId = new System.Windows.Forms.TextBox();
             this.button1 = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
-            this.textBox3 = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
-            this.button2 = new System.Windows.Forms.Button();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.textBox4 = new System.Windows.Forms.TextBox();
-            this.button3 = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+            this.ScoreNum = new System.Windows.Forms.NumericUpDown();
+            ((System.ComponentModel.ISupportInitialize)(this.ScoreNum)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
@@ -51,17 +45,18 @@
             this.label1.TabIndex = 4;
             this.label1.Text = "session_id：";
             // 
-            // textBox1
+            // SessionId
             // 
-            this.textBox1.Location = new System.Drawing.Point(99, 24);
-            this.textBox1.Multiline = true;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(323, 45);
-            this.textBox1.TabIndex = 0;
+            this.SessionId.Location = new System.Drawing.Point(99, 24);
+            this.SessionId.Multiline = true;
+            this.SessionId.Name = "SessionId";
+            this.SessionId.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.SessionId.Size = new System.Drawing.Size(323, 45);
+            this.SessionId.TabIndex = 0;
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(347, 137);
+            this.button1.Location = new System.Drawing.Point(347, 88);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 3;
@@ -69,101 +64,49 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(34, 91);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(59, 12);
-            this.label2.TabIndex = 5;
-            this.label2.Text = "version：";
-            // 
-            // textBox3
-            // 
-            this.textBox3.Location = new System.Drawing.Point(301, 91);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(121, 21);
-            this.textBox3.TabIndex = 2;
-            // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(248, 91);
+            this.label3.Location = new System.Drawing.Point(52, 93);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(41, 12);
             this.label3.TabIndex = 6;
             this.label3.Text = "得分：";
             // 
-            // numericUpDown1
+            // ScoreNum
             // 
-            this.numericUpDown1.Location = new System.Drawing.Point(100, 91);
-            this.numericUpDown1.Name = "numericUpDown1";
-            this.numericUpDown1.Size = new System.Drawing.Size(121, 21);
-            this.numericUpDown1.TabIndex = 1;
-            this.numericUpDown1.Value = new decimal(new int[] {
-            9,
+            this.ScoreNum.Location = new System.Drawing.Point(99, 88);
+            this.ScoreNum.Maximum = new decimal(new int[] {
+            100000,
             0,
             0,
             0});
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(123, 170);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 7;
-            this.button2.Text = "button2";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // textBox2
-            // 
-            this.textBox2.Location = new System.Drawing.Point(61, 398);
-            this.textBox2.Multiline = true;
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(328, 72);
-            this.textBox2.TabIndex = 8;
-            // 
-            // textBox4
-            // 
-            this.textBox4.Location = new System.Drawing.Point(61, 244);
-            this.textBox4.Multiline = true;
-            this.textBox4.Name = "textBox4";
-            this.textBox4.Size = new System.Drawing.Size(328, 90);
-            this.textBox4.TabIndex = 9;
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(250, 180);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 23);
-            this.button3.TabIndex = 10;
-            this.button3.Text = "button3";
-            this.button3.UseVisualStyleBackColor = true;
+            this.ScoreNum.Name = "ScoreNum";
+            this.ScoreNum.Size = new System.Drawing.Size(86, 21);
+            this.ScoreNum.TabIndex = 11;
+            this.ScoreNum.Value = new decimal(new int[] {
+            99999,
+            0,
+            0,
+            0});
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(434, 482);
-            this.Controls.Add(this.button3);
-            this.Controls.Add(this.textBox4);
-            this.Controls.Add(this.textBox2);
-            this.Controls.Add(this.button2);
-            this.Controls.Add(this.numericUpDown1);
-            this.Controls.Add(this.textBox3);
+            this.ClientSize = new System.Drawing.Size(434, 130);
+            this.Controls.Add(this.ScoreNum);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.button1);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.SessionId);
             this.Controls.Add(this.label1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Form1";
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+            this.Text = "跳一跳改分";
+            ((System.ComponentModel.ISupportInitialize)(this.ScoreNum)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -172,16 +115,10 @@
         #endregion
 
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox SessionId;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.NumericUpDown numericUpDown1;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.TextBox textBox2;
-        private System.Windows.Forms.TextBox textBox4;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.NumericUpDown ScoreNum;
     }
 }
 
