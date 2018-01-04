@@ -51,12 +51,12 @@
             this.SessionId.Multiline = true;
             this.SessionId.Name = "SessionId";
             this.SessionId.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.SessionId.Size = new System.Drawing.Size(323, 45);
+            this.SessionId.Size = new System.Drawing.Size(215, 97);
             this.SessionId.TabIndex = 0;
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(347, 88);
+            this.button1.Location = new System.Drawing.Point(239, 127);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 3;
@@ -67,7 +67,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(52, 93);
+            this.label3.Location = new System.Drawing.Point(52, 134);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(41, 12);
             this.label3.TabIndex = 6;
@@ -75,7 +75,7 @@
             // 
             // ScoreNum
             // 
-            this.ScoreNum.Location = new System.Drawing.Point(99, 88);
+            this.ScoreNum.Location = new System.Drawing.Point(99, 129);
             this.ScoreNum.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -85,7 +85,7 @@
             this.ScoreNum.Size = new System.Drawing.Size(86, 21);
             this.ScoreNum.TabIndex = 11;
             this.ScoreNum.Value = new decimal(new int[] {
-            99999,
+            3999,
             0,
             0,
             0});
@@ -94,7 +94,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(434, 130);
+            this.ClientSize = new System.Drawing.Size(332, 171);
             this.Controls.Add(this.ScoreNum);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.button1);

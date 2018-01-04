@@ -15,6 +15,7 @@ using System.Runtime.Serialization.Json;
 using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Diagnostics;
+using System.Threading;
 
 namespace wx_t1t
 {
@@ -25,14 +26,14 @@ namespace wx_t1t
             InitializeComponent();
         }
         private Action OnPostSuccess;
-        private Action OnPostFail;
+        private Action<string> OnPostFail;
         long times { get; set; }
         string session_id { get; set; }
         static int version = 9;
         int score { get; set; }
         string base_site = "https://mp.weixin.qq.com/wxagame/";
 
-        string referer = "https://servicewechat.com/wx7c8d593b2c3a7703/"+ version + "/page-frame.html";
+        string referer = "https://servicewechat.com/wx7c8d593b2c3a7703/6/page-frame.html";
 
         string USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 11_2_1 like Mac OS X) AppleWebKit/604.4.7 (KHTML, like Gecko) Mobile/15C153 MicroMessenger/6.6.1 NetType/WIFI Language/zh_CN";
 
@@ -44,25 +45,29 @@ namespace wx_t1t
                 session_id = SessionId.Text;
                 score = (int)ScoreNum.Value;
 
-
+                button1.Enabled = false;
+                button1.Text = "提交中.";
                 OnPostSuccess = () =>
                 {
                     RunInMainthread(() =>
                     {
                         MessageBox.Show("修改成功");
+                        button1.Text = "提交";
+                        button1.Enabled = true;
                     });
                 };
-                OnPostFail = () =>
+                OnPostFail = (err) =>
                 {
                     RunInMainthread(() =>
                     {
-                        MessageBox.Show("修改失败");
+                        MessageBox.Show("修改失败!\r\n错误："+err);
+                        button1.Enabled = true;
+                        button1.Text = "提交";
                     });
                 };
                 RunAsync(() =>
                 {
                     wxagame_getuserinfo();
-                    wxagame_getfriendsscore();
                 });
 
             }
@@ -84,6 +89,7 @@ namespace wx_t1t
             {
                 IRestResponse response = client.Execute(request);
                 Debug.WriteLine(response.Content);
+                wxagame_getfriendsscore();
             }
             catch (Exception)
             {
@@ -132,6 +138,7 @@ namespace wx_t1t
                 var resultJS = ReadToObject(response.Content);
                 if (resultJS.base_resp.errcode == 0)
                 {
+                    Thread.Sleep(score*5);
                     wxagame_settlement();
                 }
 
@@ -144,13 +151,13 @@ namespace wx_t1t
 
         private void wxagame_settlement()
         {
-            var action_data = Datestr();
+           var action_data = Datestr();
             var client = new RestClient(base_site + "wxagame_settlement");
             client.UserAgent = USER_AGENT;
             var request = new RestRequest(Method.POST);
             request.AddHeader("content-type", "application/json");
             request.AddHeader("referer", referer);
-            request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"action_data\":{1}}}", session_id, action_data), ParameterType.RequestBody);
+            request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"action_data\":\"{1}\"}}", session_id, action_data), ParameterType.RequestBody);
 
             IRestResponse response = client.Execute(request);
             Debug.WriteLine(response.Content);
@@ -162,7 +169,7 @@ namespace wx_t1t
             }
             else
             {
-                OnPostFail?.Invoke();
+                OnPostFail?.Invoke(response.Content);
             }
         }
 
@@ -184,15 +191,10 @@ namespace wx_t1t
             {
                 gd.action.Add(new object[3] { 0.752, 1.32, false });
                 gd.musicList.Add(false);
-                gd.touchList.Add(new object[2] { Math.Round(250 - randomd() * 10, 0), Math.Round(650 - randomd() * 10 * 2, 0) });
+                gd.touchList.Add(new object[2] { 185, 451 });
             }
-            //for (var i = 0; i < score; i++)
-            //{
-                //action.push([0.752, 1.32, false])
-            //musicList.push(false)
-            //touchList.push([Math.round(100 + Math.random() * 200), Math.round(300 + Math.random() * 200)])
-        //}
-        gd.version = 1;
+
+            gd.version = 1;
             var s2 = WriteFromObject<GameData>(gd);
             ad.game_data = s2;
 
@@ -226,6 +228,7 @@ namespace wx_t1t
 
             Array.Copy(pwdBytes, keyBytes, len);
 
+
             rijndaelCipher.Key = keyBytes;
 
 
@@ -254,7 +257,6 @@ namespace wx_t1t
         {
             MemoryStream ms = new MemoryStream();
 
-            // Serializer the User object to the stream.  
             DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(T));
             ser.WriteObject(ms, ad);
             byte[] json = ms.ToArray();
@@ -277,32 +279,7 @@ namespace wx_t1t
             return  rd.NextDouble();
         }
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            ActionDate ad = new ActionDate();
 
-            GameData gd = new GameData();
-            ad.score = 99;
-            ad.times = 666;
-
-            gd.seed = 1514965815335;
-            gd.action = new List<object>();
-            gd.musicList = new List<bool>();
-            gd.touchList = new List<object>();
-
-            for (var i = Math.Round(12000 + randomd() * 2000); i > 0; i--)
-            {
-                gd.action.Add(new object[3] { Math.Round(randomd(), 3), Math.Round(randomd() * 2, 2), i / 5000 == 0 ? true : false });
-            gd.musicList.Add(false);
-            gd.touchList.Add(new object[2] { Math.Round(250 - randomd() * 10, 4), Math.Round(650 - randomd() * 10 * 2, 4) });
-        }
-
-            gd.version = 1;
-            var s2= WriteFromObject<GameData>(gd);
-            ad.game_data = s2;
-
-            var ss = AESEncrypt(WriteFromObject<ActionDate>((Object)ad), SessionId.Text);
-        }
 
         private long GetTimeStamp(DateTime dateTime)
         {
@@ -323,6 +300,7 @@ namespace wx_t1t
                 action?.Invoke();
             }));
         }
+
     }
 
     public class BaseResp
@@ -350,6 +328,7 @@ namespace wx_t1t
     [DataContract]
     public class GameData
     {
+
         [DataMember(Order = 0, IsRequired = true)]
         public long seed { get; set; }
         [DataMember(Order = 1, IsRequired = true)]
@@ -358,8 +337,8 @@ namespace wx_t1t
         [DataMember(Order = 2, IsRequired = true)]
         public IList<bool> musicList { get; set; }
         [DataMember(Order = 3, IsRequired = true)]
-        public IList<object> touchList { get; set; }
-        [DataMember(Order = 4, IsRequired = true)]
+       public IList<object> touchList { get; set; }
+        [DataMember(Order = 3, IsRequired = true)]
         public int version { get; set; }
     }
     [DataContract]
