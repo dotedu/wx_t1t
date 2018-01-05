@@ -33,7 +33,10 @@
             this.button1 = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.ScoreNum = new System.Windows.Forms.NumericUpDown();
+            this.TimeNum = new System.Windows.Forms.NumericUpDown();
+            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.ScoreNum)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TimeNum)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
@@ -56,7 +59,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(239, 127);
+            this.button1.Location = new System.Drawing.Point(239, 160);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 3;
@@ -75,14 +78,14 @@
             // 
             // ScoreNum
             // 
-            this.ScoreNum.Location = new System.Drawing.Point(99, 129);
+            this.ScoreNum.Location = new System.Drawing.Point(99, 130);
             this.ScoreNum.Maximum = new decimal(new int[] {
             100000,
             0,
             0,
             0});
             this.ScoreNum.Name = "ScoreNum";
-            this.ScoreNum.Size = new System.Drawing.Size(86, 21);
+            this.ScoreNum.Size = new System.Drawing.Size(66, 21);
             this.ScoreNum.TabIndex = 11;
             this.ScoreNum.Value = new decimal(new int[] {
             3999,
@@ -90,11 +93,39 @@
             0,
             0});
             // 
+            // TimeNum
+            // 
+            this.TimeNum.Location = new System.Drawing.Point(252, 130);
+            this.TimeNum.Maximum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.TimeNum.Name = "TimeNum";
+            this.TimeNum.Size = new System.Drawing.Size(62, 21);
+            this.TimeNum.TabIndex = 13;
+            this.TimeNum.Value = new decimal(new int[] {
+            31,
+            0,
+            0,
+            0});
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(181, 134);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(65, 12);
+            this.label2.TabIndex = 12;
+            this.label2.Text = "时间系数：";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(332, 171);
+            this.ClientSize = new System.Drawing.Size(332, 195);
+            this.Controls.Add(this.TimeNum);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.ScoreNum);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.button1);
@@ -107,6 +138,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "跳一跳改分";
             ((System.ComponentModel.ISupportInitialize)(this.ScoreNum)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.TimeNum)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -119,6 +151,8 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.NumericUpDown ScoreNum;
+        private System.Windows.Forms.NumericUpDown TimeNum;
+        private System.Windows.Forms.Label label2;
     }
 }
 

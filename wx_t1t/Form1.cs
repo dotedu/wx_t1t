@@ -31,6 +31,7 @@ namespace wx_t1t
         string session_id { get; set; }
         static int version = 9;
         int score { get; set; }
+        int playTimeSeconds { get; set; }
         string base_site = "https://mp.weixin.qq.com/wxagame/";
 
         string referer = "https://servicewechat.com/wx7c8d593b2c3a7703/6/page-frame.html";
@@ -44,7 +45,7 @@ namespace wx_t1t
             {
                 session_id = SessionId.Text;
                 score = (int)ScoreNum.Value;
-
+                playTimeSeconds = score*(int)TimeNum.Value;
                 button1.Enabled = false;
                 button1.Text = "提交中.";
                 OnPostSuccess = () =>
@@ -138,7 +139,7 @@ namespace wx_t1t
                 var resultJS = ReadToObject(response.Content);
                 if (resultJS.base_resp.errcode == 0)
                 {
-                    Thread.Sleep(score*5);
+                    Thread.Sleep(playTimeSeconds);
                     wxagame_settlement();
                 }
 
@@ -187,11 +188,15 @@ namespace wx_t1t
             gd.musicList = new List<bool>();
             gd.touchList = new List<object>();
 
+
             for (var i = 0; i < score; i++)
             {
-                gd.action.Add(new object[3] { 0.752, 1.32, false });
+                Random rd = new Random();
+                var r = rd.NextDouble();
+                
+                gd.action.Add(new object[3] { Math.Round(r, 3), Math.Round(r * 2, 2), i / 5000 == 0 ? true : false });
                 gd.musicList.Add(false);
-                gd.touchList.Add(new object[2] { 185, 451 });
+                gd.touchList.Add(new object[2] { 250-Math.Round( r * 10,4), 650-Math.Round( r * 10, 4) });
             }
 
             gd.version = 1;
