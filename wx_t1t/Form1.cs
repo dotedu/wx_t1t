@@ -28,8 +28,9 @@ namespace wx_t1t
         private Action OnPostSuccess;
         private Action<string> OnPostFail;
         long times { get; set; }
-        string session_id { get; set; }
+        static string session_id { get; set; }
         static int version = 9;
+        static string base_req { get; set; }
         int score { get; set; }
         int playTimeSeconds { get; set; }
         string base_site = "https://mp.weixin.qq.com/wxagame/";
@@ -45,6 +46,7 @@ namespace wx_t1t
             {
                 session_id = SessionId.Text;
                 score = (int)ScoreNum.Value;
+                base_req = string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"version\":{1}}}", session_id, version);
                 playTimeSeconds = score*(int)TimeNum.Value;
                 button1.Enabled = false;
                 button1.Text = "提交中.";
@@ -75,6 +77,34 @@ namespace wx_t1t
             else
             {
                 MessageBox.Show("\"session_id\" 不能为空!");
+            }
+        }
+
+        private void run()
+        {
+
+            Post("wxagame_getuserinfo", base_req);
+            var s1 = Post("wxagame_getfriendsscore", base_req);
+            if (!string.IsNullOrEmpty(s1))
+            {
+                var resultJS = ReadToObject(s1);
+                if (resultJS.base_resp.errcode == 0)
+                {
+                    times = resultJS.my_user_info.times + 1;
+                    var s2 = Post("wxagame_init", base_req);
+                    if (!string.IsNullOrEmpty(s2))
+                    {
+                        resultJS = ReadToObject(s2);
+                        if (resultJS.base_resp.errcode == 0)
+                        {
+                            Thread.Sleep(playTimeSeconds);
+                            var action_data = Datestr();
+                            var postdate = string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"action_data\":\"{1}\"}}", session_id, action_data);
+                            wxagame_settlement();
+                        }
+                    }
+
+                }
             }
         }
 
@@ -124,6 +154,38 @@ namespace wx_t1t
                 throw;
             }
         }
+
+
+        private string Post(string url, string content)
+        {
+            string result = "";
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(base_site + url);
+            req.Method = "POST";
+            req.ContentType = "application/json";
+            req.Referer = referer;
+            req.UserAgent = USER_AGENT;
+
+            using (var streamWriter = new StreamWriter(req.GetRequestStream()))
+            {
+                streamWriter.Write(content);
+            }
+            try
+            {
+                var httpResponse = (HttpWebResponse)req.GetResponse();
+                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+                {
+                    result = streamReader.ReadToEnd();
+                }
+                return result;
+
+            }
+            catch (Exception)
+            {
+                return null;
+                //throw;
+            }
+        }
+
         private void wxagame_init()
         {
             var client = new RestClient(base_site + "wxagame_init");
@@ -160,6 +222,7 @@ namespace wx_t1t
             request.AddHeader("referer", referer);
             request.AddParameter("application/json", string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"action_data\":\"{1}\"}}", session_id, action_data), ParameterType.RequestBody);
 
+            IRestResponse response1 = client.Execute(request);
             IRestResponse response = client.Execute(request);
             Debug.WriteLine(response.Content);
 
@@ -183,23 +246,36 @@ namespace wx_t1t
             ad.score = score;
             ad.times = times;
 
+            var startTime = GetTimeStamp(DateTime.Now) - 1500000;
+
             gd.seed = GetTimeStamp(DateTime.Now);
             gd.action = new List<object>();
             gd.musicList = new List<bool>();
             gd.touchList = new List<object>();
-
+            gd.steps = new List<Steps>();
+            gd.timestamp = new List<long>();
 
             for (var i = 0; i < score; i++)
             {
                 Random rd = new Random();
                 var r = rd.NextDouble();
-                
+                Steps steps = new Steps();
+                steps.onceTouchMoveList = new List<object>();
+
                 gd.action.Add(new object[3] { Math.Round(r, 3), Math.Round(r * 2, 2), i / 5000 == 0 ? true : false });
                 gd.musicList.Add(false);
                 gd.touchList.Add(new object[2] { 250-Math.Round( r * 10,4), 650-Math.Round( r * 10, 4) });
+                gd.steps.Add(steps);
+                long newTime = startTime + (int)Math.Round(r * 2700);
+                gd.timestamp.Add(newTime);
+                startTime = newTime;
+                //if (onceTouchMoveList.Count<10)
+                //{
+                    //onceTouchMoveList.Add(gd.touchList);
+                //}
             }
 
-            gd.version = 1;
+            gd.version = 2;
             var s2 = WriteFromObject<GameData>(gd);
             ad.game_data = s2;
 
@@ -284,8 +360,6 @@ namespace wx_t1t
             return  rd.NextDouble();
         }
 
-
-
         private long GetTimeStamp(DateTime dateTime)
         {
             DateTime dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, 0);
@@ -330,6 +404,12 @@ namespace wx_t1t
         public int times { get; set; }
         public IList<object> hongbao_list { get; set; }
     }
+
+
+    public class Steps
+    {
+        public IList<object> onceTouchMoveList { get; set; }
+    }
     [DataContract]
     public class GameData
     {
@@ -343,7 +423,12 @@ namespace wx_t1t
         public IList<bool> musicList { get; set; }
         [DataMember(Order = 3, IsRequired = true)]
        public IList<object> touchList { get; set; }
-        [DataMember(Order = 3, IsRequired = true)]
+        [DataMember(Order = 4, IsRequired = true)]
+        public IList<Steps> steps { get; set; }
+        [DataMember(Order = 5, IsRequired = true)]
+        public IList<long> timestamp { get; set; }
+            
+        [DataMember(Order = 6, IsRequired = true)]
         public int version { get; set; }
     }
     [DataContract]
