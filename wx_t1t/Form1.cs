@@ -240,6 +240,13 @@ namespace wx_t1t
 
         private string Datestr()
         {
+
+
+            //mouseDownTime
+
+                //lastSucceedTime
+
+                //startTime
             ActionDate ad = new ActionDate();
 
             GameData gd = new GameData();
@@ -252,34 +259,39 @@ namespace wx_t1t
             gd.action = new List<object>();
             gd.musicList = new List<bool>();
             gd.touchList = new List<object>();
-            gd.steps = new List<Steps>();
+            gd.steps = new List<IList<double>>();
             gd.timestamp = new List<long>();
 
             for (var i = 0; i < score; i++)
             {
                 Random rd = new Random();
                 var r = rd.NextDouble();
-                Steps steps = new Steps();
-                steps.onceTouchMoveList = new List<object>();
 
                 gd.action.Add(new object[3] { Math.Round(r, 3), Math.Round(r * 2, 2), i / 5000 == 0 ? true : false });
                 gd.musicList.Add(false);
-                gd.touchList.Add(new object[2] { 250-Math.Round( r * 10,4), 650-Math.Round( r * 10, 4) });
-                gd.steps.Add(steps);
+
+
+                var touch_x = 250 - Math.Round(r * 10, 4);
+                var touch_y = 650 - Math.Round(r * 10, 4);
+
+                gd.touchList.Add(new object[2] { touch_x, touch_y });
+                IList<double> touchMoveList = new List<double>();
+                for (int l = 0; l < 5; l++)
+                {
+                    touchMoveList.Add(touch_x);
+                    touchMoveList.Add(touch_y);
+                }
+                gd.steps.Add(touchMoveList);
                 long newTime = startTime + (int)Math.Round(r * 2700);
                 gd.timestamp.Add(newTime);
                 startTime = newTime;
-                //if (onceTouchMoveList.Count<10)
-                //{
-                    //onceTouchMoveList.Add(gd.touchList);
-                //}
             }
 
             gd.version = 2;
             var s2 = WriteFromObject<GameData>(gd);
             ad.game_data = s2;
-
-            var ActionData = AESEncrypt(WriteFromObject<ActionDate>((Object)ad), session_id);
+            var text = WriteFromObject<ActionDate>((Object)ad);
+            var ActionData = AESEncrypt(text, session_id);
 
             return ActionData;
         }
@@ -333,7 +345,50 @@ namespace wx_t1t
 
         }
 
+        /// <summary>
+        /// AES解密
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="password"></param>
+        /// <param name="iv"></param>
+        /// <returns></returns>
+        public static string AESDecrypt(string text, string originKey)
+        {
+            var password = originKey.Substring(0, 16);
+            RijndaelManaged rijndaelCipher = new RijndaelManaged();
 
+            rijndaelCipher.Mode = CipherMode.CBC;
+
+            rijndaelCipher.Padding = PaddingMode.PKCS7;
+
+            rijndaelCipher.KeySize = 128;
+
+            rijndaelCipher.BlockSize = 128;
+
+            byte[] encryptedData = Convert.FromBase64String(text);
+
+            byte[] pwdBytes = Encoding.UTF8.GetBytes(password);
+
+            byte[] keyBytes = new byte[16];
+
+            int len = pwdBytes.Length;
+
+            if (len > keyBytes.Length) len = keyBytes.Length;
+
+            Array.Copy(pwdBytes, keyBytes, len);
+
+            rijndaelCipher.Key = keyBytes;
+
+            byte[] ivBytes = keyBytes;
+            rijndaelCipher.IV = ivBytes;
+
+            ICryptoTransform transform = rijndaelCipher.CreateDecryptor();
+
+            byte[] plainText = transform.TransformFinalBlock(encryptedData, 0, encryptedData.Length);
+
+            return Encoding.UTF8.GetString(plainText);
+
+        }
         private string WriteFromObject<T>(Object ad)
         {
             MemoryStream ms = new MemoryStream();
@@ -380,6 +435,10 @@ namespace wx_t1t
             }));
         }
 
+        private void button2_Click(object sender, EventArgs e)
+        {
+            textBox2.Text = AESDecrypt(textBox1.Text, SessionId.Text);
+        }
     }
 
     public class BaseResp
@@ -406,10 +465,7 @@ namespace wx_t1t
     }
 
 
-    public class Steps
-    {
-        public IList<object> onceTouchMoveList { get; set; }
-    }
+
     [DataContract]
     public class GameData
     {
@@ -424,7 +480,7 @@ namespace wx_t1t
         [DataMember(Order = 3, IsRequired = true)]
        public IList<object> touchList { get; set; }
         [DataMember(Order = 4, IsRequired = true)]
-        public IList<Steps> steps { get; set; }
+        public IList<IList<double>> steps { get; set; }
         [DataMember(Order = 5, IsRequired = true)]
         public IList<long> timestamp { get; set; }
             
