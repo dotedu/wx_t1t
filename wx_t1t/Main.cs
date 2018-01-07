@@ -22,7 +22,11 @@ namespace wx_t1t
         static string session_id { get; set; }
         static int version = 9;
         static string base_req { get; set; }
+        long startTime { get; set; }
+        long endTime { get; set; }
+
         int currentScore { get; set; }
+        int bestscore { get; set; }
         int score { get; set; }
 
         string base_site = "https://mp.weixin.qq.com/wxagame/";
@@ -71,6 +75,28 @@ namespace wx_t1t
             }
         }
 
+
+        private void bottlereport()
+        {
+            BottleReport br = new BottleReport();
+
+            br.base_req.session_id = session_id;
+            var rp1 = new ReportList();
+            var rp2 = new ReportList();
+            rp1.ts = (long)Math.Round((decimal)startTime/1000);
+            rp1.type = 10;
+            rp2.ts= (long)Math.Round((decimal)endTime / 1000);
+            rp2.type = 2;
+            rp2.duration = rp2.ts - rp1.ts;
+            rp2.best_score = bestscore;
+            rp2.times = times;
+            rp2.score = score;
+            rp2.break_record = score > bestscore ? 1 : 0;
+            br.report_list.Add(rp1);
+            br.report_list.Add(rp2);
+            string report = WriteFromObject<BottleReport>(br);
+            Post("wxagame_bottlereport", report);
+        }
         private void run()
         {
             Post("wxagame_getuserinfo", base_req);
@@ -81,6 +107,7 @@ namespace wx_t1t
                 if (resultJS.base_resp.errcode == 0)
                 {
                     times = resultJS.my_user_info.times + 1;
+                    bestscore = resultJS.my_user_info.history_best_score;
                     var s2 = Post("wxagame_init", base_req);
                     if (!string.IsNullOrEmpty(s2))
                     {
@@ -199,7 +226,7 @@ namespace wx_t1t
 
             GameData gd = new GameData();
 
-            var startTime = GetTimeStamp(DateTime.Now);
+            startTime = GetTimeStamp(DateTime.Now);
 
             gd.action = new List<object>();
             gd.musicList = new List<bool>();
@@ -329,9 +356,12 @@ namespace wx_t1t
             {
                 gd.timestamp[i] = gd.timestamp[i] - s;
             }
+
+            startTime = startTime - s;
+            endTime = succeedTime-s;
             ad.score = score;
             ad.times = times;
-            gd.seed = startTime- s;
+            gd.seed = startTime;
 
             gd.version = 2;
             var s2 = WriteFromObject<GameData>(gd);
@@ -534,5 +564,65 @@ namespace wx_t1t
         [DataMember(Order = 2, IsRequired = true)]
         public string game_data { get; set; }
 
+    }
+
+    [DataContract]
+    public class ClientInfo
+    {
+        public ClientInfo()
+        {
+            platform = "android";
+            brand = "HONOR";
+            model = "DUK-AL20";
+            system = "Android 7.0";
+        }
+        [DataMember(Order = 0)]
+        public string platform { get; set; }
+        [DataMember(Order = 1)]
+        public string brand { get; set; }
+        [DataMember(Order = 2)]
+        public string model { get; set; }
+        [DataMember(Order = 3)]
+        public string system { get; set; }
+    }
+    [DataContract]
+    public class BaseReq
+    {
+        public BaseReq()
+        {
+            fast = 1;
+            client_info = new ClientInfo();
+        }
+        [DataMember(Order = 0)]
+        public string session_id { get; set; }
+        [DataMember(Order = 1)]
+        public int fast { get; set; }
+        [DataMember(Order = 2)]
+        public ClientInfo client_info { get; set; }
+    }
+    [DataContract]
+    public class ReportList
+    {
+        [DataMember(Order = 0)]
+        public long ts { get; set; }
+        [DataMember(Order = 1)]
+        public int type { get; set; }
+        public int? score { get; set; }
+        public int? best_score { get; set; }
+        public int? break_record { get; set; }
+        public long? duration { get; set; }
+        public long? times { get; set; }
+    }
+    [DataContract]
+    public class BottleReport
+    {
+        public BottleReport()
+        {
+            report_list = new List<ReportList>();
+        }
+        [DataMember(Order = 0)]
+        public BaseReq base_req { get; set; }
+        [DataMember(Order = 1)]
+        public IList<ReportList> report_list { get; set; }
     }
 }
