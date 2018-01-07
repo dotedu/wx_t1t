@@ -31,8 +31,9 @@ namespace wx_t1t
         static string session_id { get; set; }
         static int version = 9;
         static string base_req { get; set; }
+        int currentScore { get; set; }
         int score { get; set; }
-        int playTimeSeconds { get; set; }
+
         string base_site = "https://mp.weixin.qq.com/wxagame/";
 
         string referer = "https://servicewechat.com/wx7c8d593b2c3a7703/6/page-frame.html";
@@ -47,7 +48,6 @@ namespace wx_t1t
                 session_id = SessionId.Text;
                 score = (int)ScoreNum.Value;
                 base_req = string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"version\":{1}}}", session_id, version);
-                playTimeSeconds = score*(int)TimeNum.Value;
                 button1.Enabled = false;
                 button1.Text = "提交中.";
                 OnPostSuccess = () =>
@@ -97,7 +97,6 @@ namespace wx_t1t
                         resultJS = ReadToObject(s2);
                         if (resultJS.base_resp.errcode == 0)
                         {
-                            Thread.Sleep(playTimeSeconds);
                             var action_data = Datestr();
                             var postdate = string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"action_data\":\"{1}\"}}", session_id, action_data);
                             wxagame_settlement();
@@ -201,7 +200,6 @@ namespace wx_t1t
                 var resultJS = ReadToObject(response.Content);
                 if (resultJS.base_resp.errcode == 0)
                 {
-                    Thread.Sleep(playTimeSeconds);
                     wxagame_settlement();
                 }
 
@@ -240,52 +238,188 @@ namespace wx_t1t
 
         private string Datestr()
         {
+            currentScore = 0;
+            int perScore = 1;
+            int addScore = 0;
+            long succeedTime =0;
+            long mouseDownTime;
+            int order = 15;
+            int StayTime;
+            bool musicScore=false;
+            IList<int> OrderList = new List<int>();
+            IList<bool> IsDouble = new List<bool>();
+            int Count = 0;
 
+            for (int i = 0; i < 100; i++)
+            {
+                if (i<60)
+                {
+                    OrderList.Add(15);//1
+                    IsDouble.Add(false);
+                }
+                else
+                {
+                    if (i < 78)
+                    {
+                        IsDouble.Add(false);
+                        OrderList.Add(26);//5
+                    }
+                    else if (i < 86)
+                    {
+                        IsDouble.Add(false);
+                        OrderList.Add(17);//10
+                    }
+                    else if (i < 95)
+                    {
+                        IsDouble.Add(true);
+                        OrderList.Add(24);//15
+                    }
+                    else
+                    {
+                        IsDouble.Add(true);
+                        OrderList.Add(19);//30
+                    }
+                } 
 
-            //mouseDownTime
-
-                //lastSucceedTime
-
-                //startTime
+            }
             ActionDate ad = new ActionDate();
 
             GameData gd = new GameData();
-            ad.score = score;
-            ad.times = times;
 
-            var startTime = GetTimeStamp(DateTime.Now) - 1500000;
+            var startTime = GetTimeStamp(DateTime.Now);
 
-            gd.seed = GetTimeStamp(DateTime.Now);
             gd.action = new List<object>();
             gd.musicList = new List<bool>();
             gd.touchList = new List<object>();
             gd.steps = new List<IList<double>>();
             gd.timestamp = new List<long>();
 
-            for (var i = 0; i < score; i++)
+            do
             {
-                Random rd = new Random();
-                var r = rd.NextDouble();
+                Random ran = new Random();
+                int stoptime = ran.Next(200, 500);
 
-                gd.action.Add(new object[3] { Math.Round(r, 3), Math.Round(r * 2, 2), i / 5000 == 0 ? true : false });
-                gd.musicList.Add(false);
+                int t = ran.Next(300, 1000);
+                double d = ran.NextDouble()*4/1000+1.88;
+                double duration = t / 1000;
+                int o = ran.Next(0, 99);
+                order=OrderList[o];
+                if (order!=15)
+                {
+                    if (Count<4)
+                    {
+                        order = 15;
+                        StayTime = 0;
+                    }
+                    else
+                    {
+                        musicScore = true;
 
+                        StayTime = ran.Next(2000, 3000);
+                    }
+                }
+                else
+                {
+                    StayTime = 0;
+                }
+                if (IsDouble[o])
+                {
+                    if (Count < 1)
+                    {
+                        perScore = 1;
+                    }
+                    else
+                    {
+                        perScore = perScore * 2 > 32 ? 32 : perScore * 2;
+                    }
+                }
+                else
+                {
+                    perScore = 1;
+                }
 
-                var touch_x = 250 - Math.Round(r * 10, 4);
-                var touch_y = 650 - Math.Round(r * 10, 4);
+                var calY = Math.Round(2.75 - d * duration , 2);
+                gd.action.Add(new object[3] { duration, calY, false });
+                gd.musicList.Add(musicScore);
+                var x = ran.Next(230, 245);
+                var y = ran.Next(500, 530);
 
+                var touch_x = x+(x % 4)*0.25;
+                var touch_y = y + (y % 4) * 0.25;
                 gd.touchList.Add(new object[2] { touch_x, touch_y });
                 IList<double> touchMoveList = new List<double>();
-                for (int l = 0; l < 5; l++)
+
+                if (t<410)
                 {
-                    touchMoveList.Add(touch_x);
-                    touchMoveList.Add(touch_y);
+                    for (int l = 0; l < 3; l++)
+                    {
+                        touchMoveList.Add(touch_x);
+                        touchMoveList.Add(touch_y);
+                    }
                 }
+                else if (t<450)
+                {
+                    for (int l = 0; l < 4; l++)
+                    {
+                        touchMoveList.Add(touch_x);
+                        touchMoveList.Add(touch_y);
+                    }
+
+                }
+                else
+                {
+                    for (int l = 0; l < 5; l++)
+                    {
+                        touchMoveList.Add(touch_x);
+                        touchMoveList.Add(touch_y);
+                    }
+
+                }
+
                 gd.steps.Add(touchMoveList);
-                long newTime = startTime + (int)Math.Round(r * 2700);
-                gd.timestamp.Add(newTime);
-                startTime = newTime;
+                if (succeedTime==0)
+                {
+                    succeedTime = startTime;
+                }
+                 
+                int WaitTime = ran.Next(1000, 3000);
+                mouseDownTime = succeedTime + StayTime+ WaitTime;
+
+                gd.timestamp.Add(mouseDownTime);
+                succeedTime = mouseDownTime+(long)Math.Round((135 + 15 * duration) * 2000 / 720)+ t;
+                switch (order)
+                {
+                    case 26:
+                        addScore=5;
+                        break;
+                    case 17:
+                        addScore = 10;
+                        break;
+                    case 24:
+                        addScore = 15;
+                        break;
+                    case 19:
+                        addScore = 30;
+                        break;
+                    default:
+                        addScore=0;
+                        break;
+                }
+                currentScore = currentScore + perScore+addScore;
+
+                Count++;
+
+            } while (currentScore<= score);
+
+            var s=gd.timestamp[Count-1] - startTime+200;
+            for (int i = 0; i < Count; i++)
+            {
+                gd.timestamp[i] = gd.timestamp[i] - s;
             }
+            ad.score = score;
+            ad.times = times;
+            gd.seed = startTime- s;
+
 
             gd.version = 2;
             var s2 = WriteFromObject<GameData>(gd);

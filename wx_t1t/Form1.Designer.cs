@@ -33,13 +33,10 @@
             this.button1 = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.ScoreNum = new System.Windows.Forms.NumericUpDown();
-            this.TimeNum = new System.Windows.Forms.NumericUpDown();
-            this.label2 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.ScoreNum)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.TimeNum)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
@@ -57,12 +54,12 @@
             this.SessionId.Multiline = true;
             this.SessionId.Name = "SessionId";
             this.SessionId.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.SessionId.Size = new System.Drawing.Size(215, 97);
+            this.SessionId.Size = new System.Drawing.Size(335, 97);
             this.SessionId.TabIndex = 0;
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(239, 160);
+            this.button1.Location = new System.Drawing.Point(239, 129);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 3;
@@ -96,35 +93,9 @@
             0,
             0});
             // 
-            // TimeNum
-            // 
-            this.TimeNum.Location = new System.Drawing.Point(252, 130);
-            this.TimeNum.Maximum = new decimal(new int[] {
-            1000,
-            0,
-            0,
-            0});
-            this.TimeNum.Name = "TimeNum";
-            this.TimeNum.Size = new System.Drawing.Size(62, 21);
-            this.TimeNum.TabIndex = 13;
-            this.TimeNum.Value = new decimal(new int[] {
-            31,
-            0,
-            0,
-            0});
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(181, 134);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(65, 12);
-            this.label2.TabIndex = 12;
-            this.label2.Text = "时间系数：";
-            // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(54, 170);
+            this.button2.Location = new System.Drawing.Point(54, 284);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(75, 23);
             this.button2.TabIndex = 14;
@@ -134,7 +105,7 @@
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(18, 216);
+            this.textBox1.Location = new System.Drawing.Point(18, 175);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(416, 81);
@@ -156,8 +127,6 @@
             this.Controls.Add(this.textBox2);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.button2);
-            this.Controls.Add(this.TimeNum);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.ScoreNum);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.button1);
@@ -170,7 +139,6 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "跳一跳改分";
             ((System.ComponentModel.ISupportInitialize)(this.ScoreNum)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.TimeNum)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -183,8 +151,6 @@
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.NumericUpDown ScoreNum;
-        private System.Windows.Forms.NumericUpDown TimeNum;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.TextBox textBox2;
