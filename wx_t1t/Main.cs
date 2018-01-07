@@ -1,5 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using RestSharp;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Runtime.Serialization;
@@ -16,15 +20,17 @@ namespace wx_t1t
         {
             InitializeComponent();
         }
-        private Action OnPostSuccess;
+        private Action OnsettlementSuccess;
         private Action<string> OnPostFail;
+
+        private Action getuserinfoSuccess;
+        private Action getfriendsscoreSuccess;
+        System.Threading.Timer Thread_Time;
         long times { get; set; }
         static string session_id { get; set; }
         static int version = 9;
-        static string base_req { get; set; }
         long startTime { get; set; }
         long endTime { get; set; }
-
         int currentScore { get; set; }
         int bestscore { get; set; }
         int score { get; set; }
@@ -33,39 +39,63 @@ namespace wx_t1t
 
         string referer = "https://servicewechat.com/wx7c8d593b2c3a7703/6/page-frame.html";
 
-        string USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 11_2_1 like Mac OS X) AppleWebKit/604.4.7 (KHTML, like Gecko) Mobile/15C153 MicroMessenger/6.6.1 NetType/WIFI Language/zh_CN";
-
+        string USER_AGENT = "Mozilla/5.0 (Linux; Android 8.0; ALP-AL00 Build/HUAWEIALP-AL00; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/57.0.2987.132 MQQBrowser/6.2 TBS/043811 Mobile Safari/537.36 MicroMessenger/6.6.1.1220(0x26060133) NetType/WIFI Language/zh_CN";
+        //string USER_AGENT = "MicroMessenger/6.6.1.1220(0x26060133) NetType/WIFI Language/zh_CN"
         private void button1_Click(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(SessionId.Text))
             {
                 session_id = SessionId.Text;
                 score = (int)ScoreNum.Value;
-                base_req = string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"version\":{1}}}", session_id, version);
                 button1.Enabled = false;
                 button1.Text = "提交中.";
-                OnPostSuccess = () =>
+                OnsettlementSuccess = () =>
                 {
                     RunInMainthread(() =>
                     {
-                        MessageBox.Show("修改成功");
+                        Thread_Time.Dispose();
                         button1.Text = "提交";
                         button1.Enabled = true;
+                        MessageBox.Show("修改成功");
+
+                        wxagame_bottlereport();
                     });
                 };
                 OnPostFail = (err) =>
                 {
                     RunInMainthread(() =>
                     {
-                        MessageBox.Show("修改失败!\r\n错误："+err);
+                        Thread_Time.Dispose();
+                        MessageBox.Show("修改失败!"+err);
                         button1.Enabled = true;
                         button1.Text = "提交";
                     });
                 };
+
+                getuserinfoSuccess = () =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        RunAsync(() =>
+                        {
+                            wxagame_getfriendsscore();
+                        });
+                    });
+                };
+                getfriendsscoreSuccess = () =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        RunAsync(() =>
+                        {
+                            Thread_Time = new System.Threading.Timer(wxagame_init, null, 0, 60000);
+                            wxagame_settlement();
+                        });
+                    });
+                };
                 RunAsync(() =>
                 {
-                    //wxagame_getuserinfo();
-                    run();
+                    wxagame_getuserinfo();
                 });
 
             }
@@ -74,13 +104,156 @@ namespace wx_t1t
                 MessageBox.Show("\"session_id\" 不能为空!");
             }
         }
-
-
-        private void bottlereport()
+        private void wxagame_getuserinfo()
         {
-            BottleReport br = new BottleReport();
+            PostDate pd = new PostDate();
+            pd.base_req.session_id = session_id;
 
-            br.base_req.session_id = session_id;
+            var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+            string content = JsonConvert.SerializeObject(pd, jSetting);
+
+            var client = new RestClient(base_site + "wxagame_getuserinfo");
+            client.UserAgent = USER_AGENT;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("content-type", "application/json");
+            request.AddHeader("referer", referer);
+            request.AddParameter("application/json", content, ParameterType.RequestBody);
+            try
+            {
+                IRestResponse response = client.Execute(request);
+                Debug.WriteLine(response.Content);
+                var resultJS = JsonConvert.DeserializeObject<Result>(response.Content);
+                if (resultJS.base_resp.errcode == 0)
+                {
+                    getuserinfoSuccess?.Invoke();
+                }
+                else
+                {
+                    OnPostFail?.Invoke("\r\n错误："+response.Content);
+                }
+            }
+            catch (Exception)
+            {
+                OnPostFail?.Invoke("");
+                throw;
+            }
+        }
+
+
+        private void wxagame_getfriendsscore()
+        {
+            PostDate pd = new PostDate();
+            pd.base_req.session_id = session_id;
+
+            var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+            string content = JsonConvert.SerializeObject(pd, jSetting);
+            var client = new RestClient(base_site + "wxagame_getfriendsscore");
+            client.UserAgent = USER_AGENT;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("content-type", "application/json");
+            request.AddHeader("referer", referer);
+            request.AddParameter("application/json", content, ParameterType.RequestBody);
+            try
+            {
+                IRestResponse response = client.Execute(request);
+                Debug.WriteLine(response.Content);
+                var resultJS = JsonConvert.DeserializeObject<Result>(response.Content);
+                if (resultJS.base_resp.errcode == 0)
+                {
+                    if (resultJS.my_user_info!=null)
+                    {
+                        times = resultJS.my_user_info.times + 1;
+                        bestscore = resultJS.my_user_info.history_best_score;
+                        getfriendsscoreSuccess?.Invoke();
+                    }
+                    else
+                    {
+                        OnPostFail?.Invoke("\r\n错误：" + "账号正在小黑屋中。。");
+                    }
+                }
+                else
+                {
+                    OnPostFail?.Invoke(response.Content);
+                }
+
+            }
+            catch (Exception)
+            {
+                OnPostFail?.Invoke("");
+                throw;
+            }
+        }
+        private void wxagame_init(object o)
+        {
+            PostDate pd = new PostDate();
+            pd.base_req.session_id = session_id;
+            pd.version=version;
+
+            var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+            string content = JsonConvert.SerializeObject(pd, jSetting);
+
+
+            var client = new RestClient(base_site + "wxagame_init");
+            client.UserAgent = USER_AGENT;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("content-type", "application/json");
+            request.AddHeader("referer", referer);
+            request.AddParameter("application/json", content, ParameterType.RequestBody);
+            try
+            {
+                IRestResponse response = client.Execute(request);
+                Debug.WriteLine(response.Content);
+                //var resultJS = JsonConvert.DeserializeObject<Result>(response.Content);
+                //if (resultJS.base_resp.errcode == 0)
+                //{
+                    //wxagame_settlement();
+                //}
+
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        private void wxagame_settlement()
+        {
+            PostDate pd = new PostDate();
+            pd.base_req.session_id = session_id;
+            //var action_data = Datestr();
+            pd.action_data = Datestr();
+
+            var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+            string content = JsonConvert.SerializeObject(pd, jSetting);
+
+            var client = new RestClient(base_site + "wxagame_settlement");
+            client.UserAgent = USER_AGENT;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("content-type", "application/json");
+            request.AddHeader("referer", referer);
+            request.AddParameter("application/json", content, ParameterType.RequestBody);
+
+            IRestResponse response1 = client.Execute(request);
+            IRestResponse response = client.Execute(request);
+            Debug.WriteLine(response.Content);
+
+            var resultJS = ReadToObject(response.Content);
+            if (resultJS.base_resp.errcode == 0)
+            {
+                OnsettlementSuccess?.Invoke();
+            }
+            else
+            {
+                OnPostFail?.Invoke("\r\n错误：" + response.Content);
+            }
+        }
+        private void wxagame_bottlereport()
+        {
+            PostDate pd = new PostDate();
+
+            pd.base_req.session_id = session_id;
+            pd.base_req.client_info = new ClientInfo();
+            pd.report_list = new List<ReportList>();
             var rp1 = new ReportList();
             var rp2 = new ReportList();
             rp1.ts = (long)Math.Round((decimal)startTime/1000);
@@ -92,90 +265,30 @@ namespace wx_t1t
             rp2.times = times;
             rp2.score = score;
             rp2.break_record = score > bestscore ? 1 : 0;
-            br.report_list.Add(rp1);
-            br.report_list.Add(rp2);
-            string report = WriteFromObject<BottleReport>(br);
-            Post("wxagame_bottlereport", report);
-        }
-        private void run()
-        {
-            Post("wxagame_getuserinfo", base_req);
-            var s1 = Post("wxagame_getfriendsscore", base_req);
-            if (!string.IsNullOrEmpty(s1))
-            {
-                var resultJS = ReadToObject(s1);
-                if (resultJS.base_resp.errcode == 0)
-                {
-                    times = resultJS.my_user_info.times + 1;
-                    bestscore = resultJS.my_user_info.history_best_score;
-                    var s2 = Post("wxagame_init", base_req);
-                    if (!string.IsNullOrEmpty(s2))
-                    {
-                        resultJS = ReadToObject(s2);
-                        if (resultJS.base_resp.errcode == 0)
-                        {
-                            var action_data = Datestr();
-                            var postdate = string.Format("{{\"base_req\":{{\"session_id\":\"{0}\",\"fast\":1}},\"action_data\":\"{1}\"}}", session_id, action_data);
-                            var s3 = Post("wxagame_settlement", postdate);
-                            if (!string.IsNullOrEmpty(s3))
-                            {
-                                resultJS = ReadToObject(s3);
-                                if (resultJS.base_resp.errcode == 0)
-                                {
-                                    OnPostSuccess?.Invoke();
-                                }
-                                else
-                                {
-                                    OnPostFail?.Invoke(s3);                              
-                                }
-                            }
-                            else
-                            {
-                                OnPostFail?.Invoke(s3);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        OnPostFail?.Invoke(s2);
-                    }
-                }
-            }
-            else
-            {
-                OnPostFail?.Invoke(s1);
-            }
+            pd.report_list.Add(rp1);
+            pd.report_list.Add(rp2);
+            var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+            string content = JsonConvert.SerializeObject(pd, jSetting);
+            Debug.WriteLine(content);
 
-        }
-        private string Post(string url, string content)
-        {
-            string result = "";
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(base_site + url);
-            req.Method = "POST";
-            req.ContentType = "application/json";
-            req.Referer = referer;
-            req.UserAgent = USER_AGENT;
-
-            using (var streamWriter = new StreamWriter(req.GetRequestStream()))
-            {
-                streamWriter.Write(content);
-            }
+            var client = new RestClient(base_site + "wxagame_init");
+            client.UserAgent = USER_AGENT;
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("content-type", "application/json");
+            request.AddHeader("referer", referer);
+            request.AddParameter("application/json", content, ParameterType.RequestBody);
             try
             {
-                var httpResponse = (HttpWebResponse)req.GetResponse();
-                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-                {
-                    result = streamReader.ReadToEnd();
-                }
-                return result;
-
+                IRestResponse response = client.Execute(request);
+                Debug.WriteLine(response.Content);
             }
             catch (Exception)
             {
-                return null;
-                //throw;
+                throw;
             }
+
         }
+
         private string Datestr()
         {
             currentScore = 0;
@@ -520,6 +633,8 @@ namespace wx_t1t
         public BaseResp base_resp { get; set; }
         public string version { get; set; }
         public MyUserInfo my_user_info { get; set; }
+        public string nickname { get; set; }
+        public string headimg { get; set; }
     }
     public class MyUserInfo
     {
@@ -572,9 +687,9 @@ namespace wx_t1t
         public ClientInfo()
         {
             platform = "android";
-            brand = "HONOR";
-            model = "DUK-AL20";
-            system = "Android 7.0";
+            brand = "HUAWEI";
+            model = "ALP-AL00";
+            system = "Android 8.0";
         }
         [DataMember(Order = 0)]
         public string platform { get; set; }
@@ -591,21 +706,19 @@ namespace wx_t1t
         public BaseReq()
         {
             fast = 1;
-            client_info = new ClientInfo();
+            //client_info = new ClientInfo();
         }
         [DataMember(Order = 0)]
         public string session_id { get; set; }
         [DataMember(Order = 1)]
+        //[DefaultValue(1)]
         public int fast { get; set; }
         [DataMember(Order = 2)]
         public ClientInfo client_info { get; set; }
     }
-    [DataContract]
     public class ReportList
     {
-        [DataMember(Order = 0)]
         public long ts { get; set; }
-        [DataMember(Order = 1)]
         public int type { get; set; }
         public int? score { get; set; }
         public int? best_score { get; set; }
@@ -614,15 +727,20 @@ namespace wx_t1t
         public long? times { get; set; }
     }
     [DataContract]
-    public class BottleReport
+    public class PostDate
     {
-        public BottleReport()
+        public PostDate()
         {
-            report_list = new List<ReportList>();
+            //report_list = new List<ReportList>();
+            base_req = new BaseReq();
         }
         [DataMember(Order = 0)]
         public BaseReq base_req { get; set; }
         [DataMember(Order = 1)]
+        public int? version { get; set; }
+        [DataMember(Order = 2)]
         public IList<ReportList> report_list { get; set; }
+        [DataMember(Order = 3)]
+        public string action_data { get; set; }
     }
 }
