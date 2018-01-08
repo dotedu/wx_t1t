@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -112,31 +111,18 @@ namespace wx_t1t
             var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
             string content = JsonConvert.SerializeObject(pd, jSetting);
 
-            var client = new RestClient(base_site + "wxagame_getuserinfo");
-            client.UserAgent = USER_AGENT;
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("content-type", "application/json");
-            request.AddHeader("referer", referer);
-            request.AddParameter("application/json", content, ParameterType.RequestBody);
-            try
+            var result = Post("wxagame_getuserinfo", content);
+            Debug.WriteLine(result);
+            var resultJS = JsonConvert.DeserializeObject<Result>(result);
+            if (resultJS.base_resp.errcode == 0)
             {
-                IRestResponse response = client.Execute(request);
-                Debug.WriteLine(response.Content);
-                var resultJS = JsonConvert.DeserializeObject<Result>(response.Content);
-                if (resultJS.base_resp.errcode == 0)
-                {
-                    getuserinfoSuccess?.Invoke();
-                }
-                else
-                {
-                    OnPostFail?.Invoke("\r\n错误："+response.Content);
-                }
+                getuserinfoSuccess?.Invoke();
             }
-            catch (Exception)
+            else
             {
-                OnPostFail?.Invoke("");
-                throw;
+                OnPostFail?.Invoke("\r\n错误：" + result);
             }
+
         }
 
 
@@ -147,41 +133,32 @@ namespace wx_t1t
 
             var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
             string content = JsonConvert.SerializeObject(pd, jSetting);
-            var client = new RestClient(base_site + "wxagame_getfriendsscore");
-            client.UserAgent = USER_AGENT;
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("content-type", "application/json");
-            request.AddHeader("referer", referer);
-            request.AddParameter("application/json", content, ParameterType.RequestBody);
-            try
+
+
+            var result = Post("wxagame_getfriendsscore", content);
+            Debug.WriteLine(result);
+
+
+            var resultJS = JsonConvert.DeserializeObject<Result>(result);
+            if (resultJS.base_resp.errcode == 0)
             {
-                IRestResponse response = client.Execute(request);
-                Debug.WriteLine(response.Content);
-                var resultJS = JsonConvert.DeserializeObject<Result>(response.Content);
-                if (resultJS.base_resp.errcode == 0)
+                if (resultJS.my_user_info != null)
                 {
-                    if (resultJS.my_user_info!=null)
-                    {
-                        times = resultJS.my_user_info.times + 1;
-                        bestscore = resultJS.my_user_info.history_best_score;
-                        getfriendsscoreSuccess?.Invoke();
-                    }
-                    else
-                    {
-                        OnPostFail?.Invoke("\r\n错误：" + "账号正在小黑屋中。。");
-                    }
+                    times = resultJS.my_user_info.times + 1;
+                    bestscore = resultJS.my_user_info.history_best_score;
+                    getfriendsscoreSuccess?.Invoke();
                 }
                 else
                 {
-                    OnPostFail?.Invoke(response.Content);
+                    OnPostFail?.Invoke("\r\n错误：" + "账号正在小黑屋中。。");
                 }
-
             }
-            catch (Exception)
+            else
             {
-                OnPostFail?.Invoke("");
-                throw;
+                OnPostFail?.Invoke(result);
             }
+
+
         }
         private void wxagame_init(object o)
         {
@@ -193,27 +170,8 @@ namespace wx_t1t
             string content = JsonConvert.SerializeObject(pd, jSetting);
 
 
-            var client = new RestClient(base_site + "wxagame_init");
-            client.UserAgent = USER_AGENT;
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("content-type", "application/json");
-            request.AddHeader("referer", referer);
-            request.AddParameter("application/json", content, ParameterType.RequestBody);
-            try
-            {
-                IRestResponse response = client.Execute(request);
-                Debug.WriteLine(response.Content);
-                //var resultJS = JsonConvert.DeserializeObject<Result>(response.Content);
-                //if (resultJS.base_resp.errcode == 0)
-                //{
-                    //wxagame_settlement();
-                //}
-
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            var result = Post("wxagame_init", content);
+            Debug.WriteLine(result);
         }
 
         private void wxagame_settlement()
@@ -226,25 +184,18 @@ namespace wx_t1t
             var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
             string content = JsonConvert.SerializeObject(pd, jSetting);
 
-            var client = new RestClient(base_site + "wxagame_settlement");
-            client.UserAgent = USER_AGENT;
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("content-type", "application/json");
-            request.AddHeader("referer", referer);
-            request.AddParameter("application/json", content, ParameterType.RequestBody);
 
-            IRestResponse response1 = client.Execute(request);
-            IRestResponse response = client.Execute(request);
-            Debug.WriteLine(response.Content);
+            var result = Post("wxagame_settlement", content);
+            Debug.WriteLine(result);
+            var resultJS = JsonConvert.DeserializeObject<Result>(result);
 
-            var resultJS = ReadToObject(response.Content);
             if (resultJS.base_resp.errcode == 0)
             {
                 OnsettlementSuccess?.Invoke();
             }
             else
             {
-                OnPostFail?.Invoke("\r\n错误：" + response.Content);
+                OnPostFail?.Invoke("\r\n错误：" + result);
             }
         }
         private void wxagame_bottlereport()
@@ -270,24 +221,42 @@ namespace wx_t1t
             var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
             string content = JsonConvert.SerializeObject(pd, jSetting);
             Debug.WriteLine(content);
+            var result = Post("wxagame_bottlereport", content);
+            Debug.WriteLine(result);
+        }
 
-            var client = new RestClient(base_site + "wxagame_init");
-            client.UserAgent = USER_AGENT;
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("content-type", "application/json");
-            request.AddHeader("referer", referer);
-            request.AddParameter("application/json", content, ParameterType.RequestBody);
+
+        private string Post(string url, string content)
+        {
+            string result = "";
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(base_site + url);
+            req.Method = "POST";
+            req.ContentType = "application/json";
+            req.Referer = referer;
+            req.UserAgent = USER_AGENT;
+
+            using (var streamWriter = new StreamWriter(req.GetRequestStream()))
+            {
+                streamWriter.Write(content);
+            }
             try
             {
-                IRestResponse response = client.Execute(request);
-                Debug.WriteLine(response.Content);
+                var httpResponse = (HttpWebResponse)req.GetResponse();
+                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+                {
+                    result = streamReader.ReadToEnd();
+                }
+                return result;
+
             }
             catch (Exception)
             {
-                throw;
+                OnPostFail?.Invoke("");
+                return null;
+                //throw;
             }
-
         }
+
 
         private string Datestr()
         {
@@ -477,9 +446,14 @@ namespace wx_t1t
             gd.seed = startTime;
 
             gd.version = 2;
-            var s2 = WriteFromObject<GameData>(gd);
+            var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
+            var s2 = JsonConvert.SerializeObject(gd, jSetting);
+
+            //var s2 = WriteFromObject<GameData>(gd);
             ad.game_data = s2;
-            var text = WriteFromObject<ActionDate>((Object)ad);
+            var text = JsonConvert.SerializeObject(ad, jSetting);
+
+            //var text = WriteFromObject<ActionDate>((Object)ad);
             var ActionData = AESEncrypt(text, session_id);
 
             return ActionData;
