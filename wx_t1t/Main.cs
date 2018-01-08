@@ -9,6 +9,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace wx_t1t
@@ -430,6 +431,7 @@ namespace wx_t1t
                 currentScore = currentScore + perScore+addScore;
 
                 Count++;
+                Thread.Sleep(100);
 
             } while (currentScore<= score);
 
