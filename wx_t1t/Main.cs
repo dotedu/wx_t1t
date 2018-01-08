@@ -22,6 +22,8 @@ namespace wx_t1t
         }
         private Action OnsettlementSuccess;
         private Action<string> OnPostFail;
+        private Action<int> OnTouch;
+        private Action OnTouchEnd;
 
         private Action getuserinfoSuccess;
         private Action getfriendsscoreSuccess;
@@ -34,6 +36,7 @@ namespace wx_t1t
         int currentScore { get; set; }
         int bestscore { get; set; }
         int score { get; set; }
+        string ActionData { get; set; }
 
         string base_site = "https://mp.weixin.qq.com/wxagame/";
 
@@ -49,6 +52,21 @@ namespace wx_t1t
                 score = (int)ScoreNum.Value;
                 button1.Enabled = false;
                 button1.Text = "提交中.";
+
+                OnTouch = (score) =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        ScoreStr.Text= score.ToString()+"分";
+                    });
+                };
+                OnTouchEnd = () =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        wxagame_settlement();
+                    });
+                };
                 OnsettlementSuccess = () =>
                 {
                     RunInMainthread(() =>
@@ -89,7 +107,107 @@ namespace wx_t1t
                         RunAsync(() =>
                         {
                             Thread_Time = new System.Threading.Timer(wxagame_init, null, 0, 60000);
-                            wxagame_settlement();
+                            
+                            Datestr();
+                        });
+                    });
+                };
+                RunAsync(() =>
+                {
+                    wxagame_getuserinfo();
+                });
+
+            }
+            else
+            {
+                MessageBox.Show("\"session_id\" 不能为空!");
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(SessionId.Text)&& !string.IsNullOrEmpty(textBox1.Text))
+            {
+                textBox2.Text = AESDecrypt(textBox1.Text, SessionId.Text);
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(SessionId.Text) && !string.IsNullOrEmpty(textBox2.Text))
+            {
+                textBox1.Text = AESEncrypt(textBox2.Text, SessionId.Text);
+            }
+
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+
+            if (!string.IsNullOrEmpty(SessionId.Text))
+            {
+                session_id = SessionId.Text;
+                score = (int)ScoreNum.Value;
+                button1.Enabled = false;
+                button1.Text = "提交中.";
+
+                OnTouch = (score) =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        ScoreStr.Text = score.ToString() + "分";
+                    });
+                };
+                OnTouchEnd = () =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        ActionData = textBox1.Text;
+                        wxagame_settlement();
+                    });
+                };
+                OnsettlementSuccess = () =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        Thread_Time.Dispose();
+                        button1.Text = "提交";
+                        button1.Enabled = true;
+                        MessageBox.Show("修改成功");
+
+                        wxagame_bottlereport();
+                    });
+                };
+                OnPostFail = (err) =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        Thread_Time.Dispose();
+                        MessageBox.Show("修改失败!" + err);
+                        button1.Enabled = true;
+                        button1.Text = "提交";
+                    });
+                };
+
+                getuserinfoSuccess = () =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        RunAsync(() =>
+                        {
+                            wxagame_getfriendsscore();
+                        });
+                    });
+                };
+                getfriendsscoreSuccess = () =>
+                {
+                    RunInMainthread(() =>
+                    {
+                        RunAsync(() =>
+                        {
+                            Thread_Time = new System.Threading.Timer(wxagame_init, null, 0, 60000);
+
+                            Datestr();
                         });
                     });
                 };
@@ -180,7 +298,7 @@ namespace wx_t1t
             PostDate pd = new PostDate();
             pd.base_req.session_id = session_id;
             //var action_data = Datestr();
-            pd.action_data = Datestr();
+            pd.action_data = ActionData;
 
             var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
             string content = JsonConvert.SerializeObject(pd, jSetting);
@@ -259,7 +377,7 @@ namespace wx_t1t
         }
 
 
-        private string Datestr()
+        private void Datestr()
         {
             currentScore = 0;
             int perScore = 1;
@@ -316,16 +434,28 @@ namespace wx_t1t
             gd.touchList = new List<object>();
             gd.steps = new List<IList<double>>();
             gd.timestamp = new List<long>();
+            Random ran;
+            int stoptime;
+            int t;
+            double d;
+            double duration;
+            int o;
+            double calY;
+            int x;
+            int y;
+            double touch_x;
+            double touch_y;
+            int WaitTime;
 
             do
             {
-                Random ran = new Random();
-                int stoptime = ran.Next(200, 500);
+                ran = new Random();
+                stoptime = ran.Next(200, 500);
 
-                int t = ran.Next(300, 1000);
-                double d = ran.NextDouble()*4/1000+1.88;
-                double duration = t / 1000;
-                int o = ran.Next(0, 99);
+                t = ran.Next(300, 1000);
+                d = ran.NextDouble()*4/1000+1.88;
+                duration = t / 1000;
+                o = ran.Next(0, 99);
                 order=OrderList[o];
                 if (order!=15)
                 {
@@ -361,14 +491,14 @@ namespace wx_t1t
                     perScore = 1;
                 }
 
-                var calY = Math.Round(2.75 - d * duration , 2);
+                calY = Math.Round(2.75 - d * duration , 2);
                 gd.action.Add(new object[3] { duration, calY, false });
                 gd.musicList.Add(musicScore);
-                var x = ran.Next(230, 245);
-                var y = ran.Next(500, 530);
+                x = ran.Next(230, 245);
+                y = ran.Next(500, 530);
 
-                var touch_x = x+(x % 4)*0.25;
-                var touch_y = y + (y % 4) * 0.25;
+                touch_x = x+(x % 4)*0.25;
+                touch_y = y + (y % 4) * 0.25;
                 gd.touchList.Add(new object[2] { touch_x, touch_y });
                 IList<double> touchMoveList = new List<double>();
 
@@ -405,11 +535,17 @@ namespace wx_t1t
                     succeedTime = startTime;
                 }
                  
-                int WaitTime = ran.Next(1000, 3000);
+                WaitTime = ran.Next(1000, 2000);
                 mouseDownTime = succeedTime + StayTime+ WaitTime;
+                Thread.Sleep(WaitTime);
 
-                gd.timestamp.Add(mouseDownTime);
-                succeedTime = mouseDownTime+(long)Math.Round((135 + 15 * duration) * 2000 / 720)+ t;
+                gd.timestamp.Add(GetTimeStamp(DateTime.Now));
+                Thread.Sleep(StayTime);
+                Thread.Sleep((int)Math.Round((135 + 15 * duration) * 2000 / 720) + t);
+
+
+                succeedTime = mouseDownTime+(int)Math.Round((135 + 15 * duration) * 2000 / 720)+ t;
+
                 switch (order)
                 {
                     case 26:
@@ -429,9 +565,9 @@ namespace wx_t1t
                         break;
                 }
                 currentScore = currentScore + perScore+addScore;
+                OnTouch?.Invoke(currentScore);
 
                 Count++;
-                Thread.Sleep(100);
 
             } while (currentScore<= score);
 
@@ -441,8 +577,8 @@ namespace wx_t1t
                 gd.timestamp[i] = gd.timestamp[i] - s;
             }
 
-            startTime = startTime - s;
-            endTime = succeedTime-s;
+            startTime = startTime;
+            endTime = GetTimeStamp(DateTime.Now);
             ad.score = score;
             ad.times = times;
             gd.seed = startTime;
@@ -454,9 +590,10 @@ namespace wx_t1t
             ad.game_data = s2;
             var text = JsonConvert.SerializeObject(ad, jSetting);
 
-            var ActionData = AESEncrypt(text, session_id);
+            ActionData = AESEncrypt(text, session_id);
+            OnTouchEnd?.Invoke();
 
-            return ActionData;
+            //return ActionData;
         }
 
         /// <summary>
@@ -566,16 +703,7 @@ namespace wx_t1t
             }));
         }
 
-        private void button2_Click(object sender, EventArgs e)
-        {
-            textBox2.Text = AESDecrypt(textBox1.Text, SessionId.Text);
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            textBox2.Text = AESEncrypt(textBox1.Text, SessionId.Text);
-
-        }
+ 
     }
 
     public class BaseResp
@@ -644,7 +772,7 @@ namespace wx_t1t
             platform = "android";
             brand = "HUAWEI";
             model = "ALP-AL00";
-            system = "Android 8.0";
+            system = "Android 8.0.0";
         }
         [DataMember(Order = 0)]
         public string platform { get; set; }
