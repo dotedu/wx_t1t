@@ -451,11 +451,9 @@ namespace wx_t1t
             var jSetting = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
             var s2 = JsonConvert.SerializeObject(gd, jSetting);
 
-            //var s2 = WriteFromObject<GameData>(gd);
             ad.game_data = s2;
             var text = JsonConvert.SerializeObject(ad, jSetting);
 
-            //var text = WriteFromObject<ActionDate>((Object)ad);
             var ActionData = AESEncrypt(text, session_id);
 
             return ActionData;
@@ -549,26 +547,7 @@ namespace wx_t1t
             return Encoding.UTF8.GetString(plainText);
 
         }
-        private string WriteFromObject<T>(Object ad)
-        {
-            MemoryStream ms = new MemoryStream();
 
-            DataContractJsonSerializer ser = new DataContractJsonSerializer(typeof(T));
-            ser.WriteObject(ms, ad);
-            byte[] json = ms.ToArray();
-            ms.Close();
-            return Encoding.UTF8.GetString(json, 0, json.Length);
-
-        }
-        private Result ReadToObject(string json)
-        {
-            Result deserialized = new Result();
-            MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
-            DataContractJsonSerializer ser = new DataContractJsonSerializer(deserialized.GetType());
-            deserialized = ser.ReadObject(ms) as Result;
-            ms.Close();
-            return deserialized;
-        }
         private long GetTimeStamp(DateTime dateTime)
         {
             DateTime dt1970 = new DateTime(1970, 1, 1, 0, 0, 0, 0);
