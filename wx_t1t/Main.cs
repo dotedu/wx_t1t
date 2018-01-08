@@ -383,12 +383,12 @@ namespace wx_t1t
             int perScore = 1;
             int addScore = 0;
             long succeedTime =0;
-            long mouseDownTime;
+            //long mouseDownTime;
             int order = 15;
             int StayTime;
             bool musicScore=false;
-            IList<int> OrderList = new List<int>();
-            IList<bool> IsDouble = new List<bool>();
+            IList<int> OrderList = new List<int>();//特殊方框概率
+            IList<bool> IsDouble = new List<bool>();//连击概率
             int Count = 0;
 
             for (int i = 0; i < 100; i++)
@@ -446,13 +446,20 @@ namespace wx_t1t
             double touch_x;
             double touch_y;
             int WaitTime;
-
+            long touchStartTime;
             do
             {
                 ran = new Random();
                 stoptime = ran.Next(200, 500);
 
-                t = ran.Next(300, 1000);
+                WaitTime = ran.Next(1000, 2000);
+                //mouseDownTime = succeedTime + StayTime + WaitTime;
+                Thread.Sleep(WaitTime);//停留时间
+
+                touchStartTime = GetTimeStamp(DateTime.Now);
+                t = ran.Next(300, 1000);//按压时间
+                Thread.Sleep(t);
+
                 d = ran.NextDouble()*4/1000+1.88;
                 duration = t / 1000;
                 o = ran.Next(0, 99);
@@ -466,16 +473,16 @@ namespace wx_t1t
                     }
                     else
                     {
-                        musicScore = true;
+                        musicScore = true;//特殊方框
 
-                        StayTime = ran.Next(2000, 3000);
+                        StayTime = ran.Next(2100, 2300);
                     }
                 }
                 else
                 {
                     StayTime = 0;
                 }
-                if (IsDouble[o])
+                if (IsDouble[o])//连击
                 {
                     if (Count < 1)
                     {
@@ -490,6 +497,8 @@ namespace wx_t1t
                 {
                     perScore = 1;
                 }
+                Thread.Sleep(StayTime);//特殊方框 停留时间
+                Thread.Sleep((int)Math.Round((135 + 15 * duration) * 2000 / 720));//飞行时间
 
                 calY = Math.Round(2.75 - d * duration , 2);
                 gd.action.Add(new object[3] { duration, calY, false });
@@ -534,19 +543,14 @@ namespace wx_t1t
                 {
                     succeedTime = startTime;
                 }
-                 
-                WaitTime = ran.Next(1000, 2000);
-                mouseDownTime = succeedTime + StayTime+ WaitTime;
-                Thread.Sleep(WaitTime);
-
-                gd.timestamp.Add(GetTimeStamp(DateTime.Now));
-                Thread.Sleep(StayTime);
-                Thread.Sleep((int)Math.Round((135 + 15 * duration) * 2000 / 720) + t);
 
 
-                succeedTime = mouseDownTime+(int)Math.Round((135 + 15 * duration) * 2000 / 720)+ t;
+                gd.timestamp.Add(touchStartTime);
 
-                switch (order)
+
+                succeedTime = GetTimeStamp(DateTime.Now);
+
+                switch (order)//特殊分值
                 {
                     case 26:
                         addScore=5;
@@ -578,7 +582,7 @@ namespace wx_t1t
             }
 
             startTime = startTime;
-            endTime = GetTimeStamp(DateTime.Now);
+            endTime = succeedTime;
             ad.score = score;
             ad.times = times;
             gd.seed = startTime;
