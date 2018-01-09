@@ -499,7 +499,7 @@ namespace wx_t1t
                 t = ran.Next(300, 1000);//按压时间
                 duration = t / 1000;
 
-                //Thread.Sleep(t);
+                //Thread.Sleep(t); 
                 //Thread.Sleep((int)Math.Round((135 + 15 * duration) * 2000 / 720));//飞行时间
 
                 calY = Math.Round(2.75 - d * duration , 2);
