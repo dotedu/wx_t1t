@@ -503,8 +503,8 @@ namespace wx_t1t
                 calY = Math.Round(2.75 - d * duration , 2);
                 gd.action.Add(new object[3] { duration, calY, false });
                 gd.musicList.Add(musicScore);
-                x = ran.Next(230, 245);
-                y = ran.Next(500, 530);
+                x = ran.Next(120, 165);
+                y = ran.Next(480, 500);
 
                 touch_x = x+(x % 4)*0.25;
                 touch_y = y + (y % 4) * 0.25;
