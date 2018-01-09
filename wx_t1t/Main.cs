@@ -456,12 +456,8 @@ namespace wx_t1t
                 //mouseDownTime = succeedTime + StayTime + WaitTime;
                 Thread.Sleep(WaitTime);//停留时间
 
-                touchStartTime = GetTimeStamp(DateTime.Now);
-                t = ran.Next(300, 1000);//按压时间
-                Thread.Sleep(t);
 
                 d = ran.NextDouble()*4/1000+1.88;
-                duration = t / 1000;
                 o = ran.Next(0, 99);
                 order=OrderList[o];
                 if (order!=15)
@@ -498,7 +494,13 @@ namespace wx_t1t
                     perScore = 1;
                 }
                 Thread.Sleep(StayTime);//特殊方框 停留时间
-                Thread.Sleep((int)Math.Round((135 + 15 * duration) * 2000 / 720));//飞行时间
+                touchStartTime = GetTimeStamp(DateTime.Now) + WaitTime+ StayTime;
+                //touchStartTime = GetTimeStamp(DateTime.Now);
+                t = ran.Next(300, 1000);//按压时间
+                duration = t / 1000;
+
+                //Thread.Sleep(t);
+                //Thread.Sleep((int)Math.Round((135 + 15 * duration) * 2000 / 720));//飞行时间
 
                 calY = Math.Round(2.75 - d * duration , 2);
                 gd.action.Add(new object[3] { duration, calY, false });
@@ -547,8 +549,8 @@ namespace wx_t1t
 
                 gd.timestamp.Add(touchStartTime);
 
-
-                succeedTime = GetTimeStamp(DateTime.Now);
+                succeedTime = touchStartTime + t + (int)Math.Round((135 + 15 * duration) * 2000 / 720);
+                //succeedTime = GetTimeStamp(DateTime.Now);
 
                 switch (order)//特殊分值
                 {
@@ -575,14 +577,14 @@ namespace wx_t1t
 
             } while (currentScore<= score);
 
-            var s=gd.timestamp[Count-1] - startTime+200;
+            var s= succeedTime - startTime+200;
             for (int i = 0; i < Count; i++)
             {
                 gd.timestamp[i] = gd.timestamp[i] - s;
             }
 
-            startTime = startTime;
-            endTime = succeedTime;
+            startTime = startTime-s;
+            endTime = succeedTime-s;
             ad.score = score;
             ad.times = times;
             gd.seed = startTime;
